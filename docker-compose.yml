@@ -1,0 +1,44 @@
+version: '3'
+services:
+  mongo:
+    image: mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+      ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: mexpress
+      ME_CONFIG_BASICAUTH_PASSWORD: mexpress
+  apache:
+    container_name: apache
+    build: ./docker/apache
+    links:
+      - php
+    ports:
+      - "80:80"
+    volumes:
+      - ./logs/apache:/var/log/apache2
+      - ./src/helloworld:/usr/local/apache2/htdocs/helloworld
+  php:
+    container_name: php
+    build: ./docker/php
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./src/helloworld:/usr/local/apache2/htdocs/helloworld
+    working_dir: /usr/local/apache2/htdocs/helloworld
+  composer:
+    container_name: composer
+    image: composer/composer
+    volumes:
+      - ./src/helloworld:/usr/local/apache2/htdocs/helloworld
+    working_dir: /usr/local/apache2/htdocs/helloworld
+    command: install
